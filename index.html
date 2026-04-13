@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Central Ohio Zoning Map</title>
+    <title>Central Ohio Duplex Zoning</title>
     <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/pmtiles@2.x/dist/index.js"></script>
@@ -39,7 +39,7 @@
                     {
                         'id': 'zoning-polygons',
                         'source': 'zoning-source',
-                        'source-layer': 'base_lyr_FeaturesToJSON',
+                        'source-layer': 'zoning_layer', // Matches the -l flag
                         'type': 'fill',
                         'paint': {
                             'fill-color': '#2c7fb8',
@@ -53,7 +53,6 @@
             zoom: 9
         });
 
-        // Add zoom controls
         map.addControl(new maplibregl.NavigationControl());
     </script>
 </body>
