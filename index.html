@@ -113,9 +113,19 @@
                 const properties = clickedShape.properties;
                 const coordinates = e.lngLat;
 
+                const hiddenFields = [
+                    'OBJECTID',
+                    'Shape',
+                    'Shape_Length',
+                    'Shape_Area'
+                ];
+
+
                 let popupContent = "<h3>Parcel Information</h3>";
                 for (const key in properties) {
-                    popupContent += `<strong>${key}:</strong> ${properties[key]}<br>`;
+                    if(!hiddenFields.includes(key)) {
+                        popupContent += `<strong>${key}:</strong> ${properties[key]}<br>`;
+                    }
                 }
 
                 new maplibregl.Popup()
