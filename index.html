@@ -23,6 +23,34 @@
             width: 150px; /* Adjust size as needed */
             height: auto;
         }
+
+        /* --- DISCLAIMER STYLING --- */
+.disclaimer {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #444;
+    max-width: 250px;
+    line-height: 1.4;
+    border: 1px solid #ccc;
+    pointer-events: auto; /* Keeps the email link clickable */
+}
+
+.disclaimer a {
+    color: #2c7fb8;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.disclaimer a:hover {
+    text-decoration: underline;
+}
     </style>
 </head>
 <body>
@@ -31,6 +59,12 @@
 
     <div class="watermark">
         <img src="watermark.png" alt="Logo">
+    </div>
+
+    <div class="disclaimer">
+    <strong>Disclaimer:</strong> While we strive for accuracy, zoning data is subject to change and errors may occur. 
+    Please email corrections to 
+    <a href="mailto:jacob@sciotoanalysis.com">jacob@sciotoanalysis.com</a>.
     </div>
 
     <script>
