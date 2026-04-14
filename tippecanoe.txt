@@ -1,4 +1,4 @@
-tippecanoe -o /Volumes/T7/Central-Ohio-Duplexes/duplex_map.pmtiles \
+tippecanoe -o "/Volumes/T7/AHACO Mapping/duplex_map.pmtiles" \
 -l zoning_layer \
 -zg --projection=EPSG:4326 --drop-densest-as-needed --extend-zooms-if-still-dropping \
-/Volumes/T7/AHACO\ Mapping/duplexes_v2.geojson
+"/Volumes/T7/AHACO Mapping/duplexes_v4.geojson"
