@@ -1,41 +1,94 @@
-<script>
-    // 1. Setup PMTiles Protocol
-    let protocol = new pmtiles.Protocol();
-    maplibregl.addProtocol("pmtiles", protocol.tile);
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My PMTiles Map</title>
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Tell MapLibre how to handle the pmtiles:// protocol
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.tile);
 
-    // 2. CHANGE THIS: Paste your Release Link inside these quotes
-    const PMTILES_URL = "https://github.com/scioto-analysis/Central-Ohio-Duplexes/releases/download/v1.0/duplex_map.pmtiles";
+        // Your hosted file URL
+        const PMTILES_URL = "duplex_map.pmtiles";
 
-    const map = new maplibregl.Map({
-        container: 'map',
-        style: {
-            version: 8,
-            sources: {
-                'zoning-source': {
-                    type: 'vector',
-                    url: `pmtiles://${PMTILES_URL}`,
-                    attribution: 'Scioto Analysis'
+        const map = new maplibregl.Map({
+            container: 'map',
+            zoom: 10, // Zoomed in closer
+            center: [-83.00, 39.96], // Longitude, Latitude for Central Ohio
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+        });
+            // 2. Wait for the basemap to finish loading
+        map.on('load', () => {
+            
+            // 3. Add your PMTiles file as a new data source
+            map.addSource('my-pmtiles-source', {
+                type: "vector",
+                url: "pmtiles://" + PMTILES_URL
+            });
+            // 4. Draw your layer on top of the basemap
+            map.addLayer({
+                "id": "my-duplexes",
+                "type": "fill", // REMEMBER: change to "circle" if using points
+                "source": "my-pmtiles-source",
+                "source-layer": "zoning_layer", // Adjust based on your PMTiles layer name
+                "paint": {
+                    "fill-color": [
+                        "match",
+                        ["get", "Duplex"], // Look at the "Duplex" field
+                        
+                        "Yes", "#22c55e",  // If exactly "yes", make it green
+                        "No", "#ef4444",   // If exactly "no", make it red
+                        
+                        "#d1d5db"          // FALLBACK: If null, blank, or anything else, make it light gray
+                    ],
+                    "fill-opacity": 0.8
                 }
-            },
-            layers: [
-                {
-                    'id': 'background',
-                    'type': 'background',
-                    'paint': { 'background-color': '#ff0000' } // RED TEST
-                },
-                {
-                    'id': 'zoning-polygons',
-                    'source': 'zoning-source',
-                    'source-layer': 'zoning_layer',
-                    'type': 'fill',
-                    'paint': {
-                        'fill-color': '#2c7fb8',
-                        'fill-opacity': 0.5
-                    }
+            });
+            // --- ADD THIS AFTER YOUR map.addLayer CODE ---
+
+            // 1. Listen for a click on the "my-duplexes" layer
+            map.on('click', 'my-duplexes', (e) => {
+                
+                // Extract the data properties from the clicked shape
+                const clickedShape = e.features[0];
+                const properties = clickedShape.properties;
+                
+                // Get the exact latitude/longitude where the user clicked
+                const coordinates = e.lngLat;
+
+                // 2. Build the HTML for the popup box
+                // This loops through EVERY piece of data attached to the shape
+                let popupContent = "<h3>Parcel Information</h3>";
+                for (const key in properties) {
+                    popupContent += `<strong>${key}:</strong> ${properties[key]}<br>`;
                 }
-            ]
-        },
-        center: [-82.9988, 39.9612],
-        zoom: 9
-    });
-</script>
+
+                // 3. Create the popup and put it on the map
+                new maplibregl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            });
+
+            // 4. UX Polish: Change the mouse cursor to a pointer when hovering over a parcel
+            map.on('mouseenter', 'my-duplexes', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change the mouse cursor back when it leaves the parcel
+            map.on('mouseleave', 'my-duplexes', () => {
+                map.getCanvas().style.cursor = '';
+            });
+        });
+    </script>
+</body>
+</html>
