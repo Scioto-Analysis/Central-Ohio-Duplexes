@@ -109,22 +109,20 @@
             });
 
             map.on('click', 'my-duplexes', (e) => {
-                const clickedShape = e.features[0];
-                const properties = clickedShape.properties;
+                const properties = e.features[0].properties;
                 const coordinates = e.lngLat;
 
-                const hiddenFields = [
-                    'OBJECTID',
-                    'Shape',
-                    'Shape_Length',
-                    'Shape_Area'
-                ];
-
+                const fieldLabels = {
+                    'municipality': 'Municipality',
+                    'Duplex': 'Zoned for Duplex Construction',
+                    'County': 'County',
+                    'TOWNSHIP': 'Township'
+                };
 
                 let popupContent = "<h3>Parcel Information</h3>";
                 for (const key in properties) {
-                    if(!hiddenFields.includes(key)) {
-                        popupContent += `<strong>${key}:</strong> ${properties[key]}<br>`;
+                    if(fieldLabels[key]) {
+                        popupContent += `<strong>${fieldLabels[key]}:</strong> ${properties[key]}<br>`;
                     }
                 }
 
