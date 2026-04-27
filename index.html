@@ -154,6 +154,7 @@ map.addControl(
                 "type": "fill",
                 "source": "my-pmtiles-source",
                 "source-layer": "zoning_layer",
+                "filter": ["<", ["get", "Shape_Length"], 40000],
                 "paint": {
                     "fill-color": [
                         "match",
