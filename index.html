@@ -154,6 +154,11 @@ map.addControl(
                 "type": "fill",
                 "source": "my-pmtiles-source",
                 "source-layer": "zoning_layer",
+                "filter": [
+                    "all",
+                    ["has", "StateLUC"],                // Must have the field
+                    ["!=", ["get", "StateLUC"], ""]     // Must not be an empty string
+                ],
                 "paint": {
                     "fill-color": [
                         "match",
