@@ -167,6 +167,45 @@ map.addControl(
                 }
             });
 
+            // Add a transparent layer that only contains city/place labels
+            map.addLayer({
+                'id': 'top-labels',
+                'type': 'symbol',
+                'source': {
+                    'type': 'raster',
+                    'tiles': ['https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'],
+                    'tileSize': 256
+                },
+                'paint': { 'raster-opacity': 1 }
+            });
+
+            // Adding official highway shields/labels
+            map.addLayer({
+                'id': 'highway-shields',
+                'type': 'symbol',
+                'source': {
+                    'type': 'vector',
+                    'tiles': ['https://tiles.basemaps.cartocdn.com/tiles/world/{z}/{x}/{y}.pbf']
+                },
+                'source-layer': 'transportation_name',
+                'filter': ['all', 
+                    ['==', 'class', 'motorway'], // Only Interstates/Highways
+                    ['has', 'ref']               // Only those with a number (like 71 or 270)
+                ],
+                'layout': {
+                    'text-field': ['get', 'ref'],
+                    'text-font': ['Open Sans Bold'],
+                    'text-size': 12,
+                    'symbol-placement': 'line',
+                    'text-rotation-alignment': 'viewport'
+                },
+                'paint': {
+                    'text-color': '#ffffff',
+                    'text-halo-color': '#2c7fb8', // Ohio Blue highway shield color
+                    'text-halo-width': 3
+                }
+            });
+
             map.on('click', 'my-duplexes', (e) => {
                 const properties = e.features[0].properties;
                 const coordinates = e.lngLat;
