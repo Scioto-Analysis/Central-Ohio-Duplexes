@@ -1,12 +1,4 @@
 tippecanoe -o "/Volumes/T7/AHACO Mapping/duplex_map.pmtiles" \
 -l zoning_layer \
---minimum-zoom=8 \
---maximum-zoom=14 \
---base-zoom=14 \
---projection=EPSG:4326 \
---drop-densest-as-needed \
---extend-zooms-if-still-dropping \
---simplification=2 \
---gamma=2 \
---coalesce-smallest-as-needed \
-"/Volumes/T7/AHACO Mapping/duplexes_v6.geojson"
+-zg --projection=EPSG:4326 --drop-densest-as-needed --extend-zooms-if-still-dropping \
+"/Volumes/T7/AHACO Mapping/duplexes_v7.geojson"
