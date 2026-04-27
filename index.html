@@ -118,22 +118,26 @@
             });
 
             // 1. Base Parcel Layer
-            map.addLayer({
-                "id": "my-duplexes",
-                "type": "fill",
-                "source": "my-pmtiles-source",
-                "source-layer": "zoning_layer",
-                "filter": ["<", ["get", "Shape_Length"], 40000],
-                "paint": {
-                    "fill-color": [
-                        "match", ["get", "Duplex"],
-                        "Yes", "#22c55e",
-                        "No", "#ef4444",
-                        "#d1d5db"
-                    ],
-                    "fill-opacity": 0.8
-                }
-            });
+        map.addLayer({
+            "id": "my-duplexes",
+            "type": "fill",
+            "source": "my-pmtiles-source",
+            "source-layer": "zoning_layer",
+            "filter": ["<", ["get", "Shape_Length"], 40000],
+            "paint": {
+                "fill-color": [
+                    "match",
+                    ["get", "Duplex"],
+                    // Using softer, lighter versions of Green and Red
+                    "Yes", "#4ade80", 
+                    "No", "#f87171",
+                    "#d1d5db"
+                ],
+                // Lowering opacity to 0.5 allows the text underneath to show through
+                "fill-opacity": 0.5,
+                "fill-outline-color": "#ffffff"
+            }
+        });
 
             // 2. City Labels (On top of parcels)
             map.addLayer({
