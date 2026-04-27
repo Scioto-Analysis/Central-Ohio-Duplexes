@@ -17,21 +17,20 @@
             bottom: 25px; 
             left: 20px;   
             z-index: 1000; 
-            opacity: 1.0;  /* Fully bold/opaque */
+            opacity: 1.0;
             pointer-events: none; 
-            /* This shadow makes the logo stand out from the map lines */
             filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3)); 
         }
 
         .watermark img {
-            width: 200px; /* Increased from 150px to be bigger */
+            width: 200px;
             height: auto;
         }
 
         /* --- DISCLAIMER STYLING --- */
         .disclaimer {
             position: absolute;
-            bottom: 35px; /* Space to clear the attribution */
+            bottom: 35px;
             right: 10px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.9); 
@@ -52,10 +51,6 @@
             text-decoration: none;
             font-weight: bold;
         }
-
-        .disclaimer a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -73,11 +68,9 @@
     </div>
 
     <script>
-        // Tell MapLibre how to handle the pmtiles:// protocol
         let protocol = new pmtiles.Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
 
-        // Your hosted file URL
         const PMTILES_URL = "duplex_map.pmtiles";
 
         const map = new maplibregl.Map({
@@ -87,61 +80,36 @@
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
         });
 
+        // Search Engine API for Addresses
         const geocoderApi = {
-    forwardGeocode: async (config) => {
-        const features = [];
-        try {
-            /* This calls the OpenStreetMap Nominatim API */
-            let request =
-                'https://nominatim.openstreetmap.org/search?q=' +
-                config.query +
-                '&format=geojson&polygon_geojson=1&addressdetails=1';
-            
-            // Optional: Limit results to Ohio to avoid jumping out of your map area
-            request += '&viewbox=-84.82,42.32,-80.51,38.40&bounded=1';
-
-            const response = await fetch(request);
-            const geojson = await response.json();
-            for (let feature of geojson.features) {
-                let center = [
-                    feature.bbox[0] +
-                    (feature.bbox[2] - feature.bbox[0]) / 2,
-                    feature.bbox[1] +
-                    (feature.bbox[3] - feature.bbox[1]) / 2
-                ];
-                let point = {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: center
-                    },
-                    place_name: feature.properties.display_name,
-                    properties: feature.properties,
-                    text: feature.properties.display_name,
-                    place_type: ['place'],
-                    center: center
-                };
-                features.push(point);
+            forwardGeocode: async (config) => {
+                const features = [];
+                try {
+                    let request = 'https://nominatim.openstreetmap.org/search?q=' + config.query + '&format=geojson&polygon_geojson=1&addressdetails=1';
+                    request += '&viewbox=-84.82,42.32,-80.51,38.40&bounded=1';
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (let feature of geojson.features) {
+                        let center = [
+                            feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                            feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
+                        ];
+                        features.push({
+                            type: 'Feature',
+                            geometry: { type: 'Point', coordinates: center },
+                            place_name: feature.properties.display_name,
+                            properties: feature.properties,
+                            text: feature.properties.display_name,
+                            place_type: ['place'],
+                            center: center
+                        });
+                    }
+                } catch (e) { console.error(e); }
+                return { features };
             }
-        } catch (e) {
-            console.error(`Failed to forwardGeocode with error: ${e}`);
-        }
-
-        return {
-            features: features
         };
-    }
-};
 
-// Add the search box to the top-right of the map
-map.addControl(
-    new MaplibreGeocoder(geocoderApi, {
-        maplibregl: maplibregl,
-        placeholder: "Search for an address...",
-        zoom: 16 // Zoom level to fly to when a result is picked
-    }),
-    'top-right'
-);
+        map.addControl(new MaplibreGeocoder(geocoderApi, { maplibregl, placeholder: "Search for an address...", zoom: 16 }), 'top-right');
 
         map.on('load', () => {
             map.addSource('my-pmtiles-source', {
@@ -149,6 +117,7 @@ map.addControl(
                 url: "pmtiles://" + PMTILES_URL
             });
 
+            // 1. Base Parcel Layer
             map.addLayer({
                 "id": "my-duplexes",
                 "type": "fill",
@@ -157,8 +126,7 @@ map.addControl(
                 "filter": ["<", ["get", "Shape_Length"], 40000],
                 "paint": {
                     "fill-color": [
-                        "match",
-                        ["get", "Duplex"],
+                        "match", ["get", "Duplex"],
                         "Yes", "#22c55e",
                         "No", "#ef4444",
                         "#d1d5db"
@@ -167,7 +135,7 @@ map.addControl(
                 }
             });
 
-            // Add a transparent layer that only contains city/place labels
+            // 2. City Labels (On top of parcels)
             map.addLayer({
                 'id': 'top-labels',
                 'type': 'symbol',
@@ -179,7 +147,7 @@ map.addControl(
                 'paint': { 'raster-opacity': 1 }
             });
 
-            // Adding official highway shields/labels
+            // 3. Highway Shields
             map.addLayer({
                 'id': 'highway-shields',
                 'type': 'symbol',
@@ -188,28 +156,23 @@ map.addControl(
                     'tiles': ['https://tiles.basemaps.cartocdn.com/tiles/world/{z}/{x}/{y}.pbf']
                 },
                 'source-layer': 'transportation_name',
-                'filter': ['all', 
-                    ['==', 'class', 'motorway'], // Only Interstates/Highways
-                    ['has', 'ref']               // Only those with a number (like 71 or 270)
-                ],
+                'filter': ['all', ['==', 'class', 'motorway'], ['has', 'ref']],
                 'layout': {
                     'text-field': ['get', 'ref'],
-                    'text-font': ['Open Sans Bold'],
-                    'text-size': 12,
-                    'symbol-placement': 'line',
-                    'text-rotation-alignment': 'viewport'
+                    'text-font': ['Open Sans Bold', 'Arial Unicode MS Regular'],
+                    'text-size': 10,
+                    'symbol-placement': 'line'
                 },
                 'paint': {
                     'text-color': '#ffffff',
-                    'text-halo-color': '#2c7fb8', // Ohio Blue highway shield color
-                    'text-halo-width': 3
+                    'text-halo-color': '#2c7fb8',
+                    'text-halo-width': 2
                 }
             });
 
+            // Click Events
             map.on('click', 'my-duplexes', (e) => {
                 const properties = e.features[0].properties;
-                const coordinates = e.lngLat;
-
                 const fieldLabels = {
                     'Duplex': 'Zoned for Duplex Construction',
                     'municipality_1': 'Municipality',
@@ -225,19 +188,11 @@ map.addControl(
                     }
                 }
 
-                new maplibregl.Popup()
-                    .setLngLat(coordinates)
-                    .setHTML(popupContent)
-                    .addTo(map);
+                new maplibregl.Popup().setLngLat(e.lngLat).setHTML(popupContent).addTo(map);
             });
 
-            map.on('mouseenter', 'my-duplexes', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-
-            map.on('mouseleave', 'my-duplexes', () => {
-                map.getCanvas().style.cursor = '';
-            });
+            map.on('mouseenter', 'my-duplexes', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', 'my-duplexes', () => map.getCanvas().style.cursor = '');
         });
     </script>
 </body>
