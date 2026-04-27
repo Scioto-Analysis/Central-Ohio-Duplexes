@@ -5,6 +5,8 @@
     <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.css" type="text/css" />
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -84,6 +86,62 @@
             center: [-83.00, 39.96],
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
         });
+
+        const geocoderApi = {
+    forwardGeocode: async (config) => {
+        const features = [];
+        try {
+            /* This calls the OpenStreetMap Nominatim API */
+            let request =
+                'https://nominatim.openstreetmap.org/search?q=' +
+                config.query +
+                '&format=geojson&polygon_geojson=1&addressdetails=1';
+            
+            // Optional: Limit results to Ohio to avoid jumping out of your map area
+            request += '&viewbox=-84.82,42.32,-80.51,38.40&bounded=1';
+
+            const response = await fetch(request);
+            const geojson = await response.json();
+            for (let feature of geojson.features) {
+                let center = [
+                    feature.bbox[0] +
+                    (feature.bbox[2] - feature.bbox[0]) / 2,
+                    feature.bbox[1] +
+                    (feature.bbox[3] - feature.bbox[1]) / 2
+                ];
+                let point = {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: center
+                    },
+                    place_name: feature.properties.display_name,
+                    properties: feature.properties,
+                    text: feature.properties.display_name,
+                    place_type: ['place'],
+                    center: center
+                };
+                features.push(point);
+            }
+        } catch (e) {
+            console.error(`Failed to forwardGeocode with error: ${e}`);
+        }
+
+        return {
+            features: features
+        };
+    }
+};
+
+// Add the search box to the top-right of the map
+map.addControl(
+    new MaplibreGeocoder(geocoderApi, {
+        maplibregl: maplibregl,
+        placeholder: "Search for an address...",
+        zoom: 16 // Zoom level to fly to when a result is picked
+    }),
+    'top-right'
+);
 
         map.on('load', () => {
             map.addSource('my-pmtiles-source', {
