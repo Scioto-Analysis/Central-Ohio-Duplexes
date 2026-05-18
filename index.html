@@ -51,9 +51,78 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        /* --- MODAL POPUP STYLING --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* Must sit higher than map and controls */
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-family: Arial, sans-serif;
+            color: #333333;
+            line-height: 1.5;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .modal-button {
+            background-color: #2c7fb8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            float: right;
+            transition: background-color 0.2s;
+        }
+
+        .modal-button:hover {
+            background-color: #1c5a85;
+        }
+
+        /* Helper class to hide the modal */
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
+
+    <!-- MODAL POPUP DISCLOSURE -->
+    <div id="welcomeModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Central Ohio Duplex Map Disclosure</h2>
+            <p>
+                The following map is Scioto Analysis’s best estimate of duplex zoning in Central Ohio based on the current information available. 
+                Zoning data for Central Ohio has been compiled from more than 200 jurisdictions. Zoning data is subject to change and errors may occur. Please email corrections to 
+                <span style="white-space: nowrap;"><a href="mailto:jacob@sciotoanalysis.com">jacob@sciotoanalysis.com</a>.</span>
+            </p>
+            <button id="closeModalBtn" class="modal-button">I Understand</button>
+        </div>
+    </div>
 
     <div id="map"></div>
 
@@ -68,6 +137,15 @@
     </div>
 
     <script>
+        // Modal Logic
+        const modal = document.getElementById('welcomeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // Map Setup
         let protocol = new pmtiles.Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
 
@@ -118,26 +196,24 @@
             });
 
             // 1. Base Parcel Layer
-        map.addLayer({
-            "id": "my-duplexes",
-            "type": "fill",
-            "source": "my-pmtiles-source",
-            "source-layer": "zoning_layer",
-            "filter": ["<", ["get", "Shape_Length"], 40000],
-            "paint": {
-                "fill-color": [
-                    "match",
-                    ["get", "Duplex"],
-                    // Using softer, lighter versions of Green and Red
-                    "Yes", "#4ade80", 
-                    "No", "#f87171",
-                    "#d1d5db"
-                ],
-                // Lowering opacity to 0.5 allows the text underneath to show through
-                "fill-opacity": 0.8,
-                "fill-outline-color": "#ffffff"
-            }
-        });
+            map.addLayer({
+                "id": "my-duplexes",
+                "type": "fill",
+                "source": "my-pmtiles-source",
+                "source-layer": "zoning_layer",
+                "filter": ["<", ["get", "Shape_Length"], 40000],
+                "paint": {
+                    "fill-color": [
+                        "match",
+                        ["get", "Duplex"],
+                        "Yes", "#4ade80", 
+                        "No", "#f87171",
+                        "#d1d5db"
+                    ],
+                    "fill-opacity": 0.8,
+                    "fill-outline-color": "#ffffff"
+                }
+            });
 
             // 2. City Labels (On top of parcels)
             map.addLayer({
@@ -157,7 +233,6 @@
                 'type': 'symbol',
                 'source': {
                     'type': 'vector',
-                    // This is a reliable open-source tile provider for highway data
                     'tiles': ['https://tiles.basemaps.cartocdn.com/tiles/world/{z}/{x}/{y}.pbf']
                 },
                 'source-layer': 'transportation_name',
@@ -165,9 +240,9 @@
                     ['==', 'class', 'motorway'], 
                     ['has', 'ref']
                 ],
-                'minzoom': 7, // Make sure they show up when zoomed out
+                'minzoom': 7,
                 'layout': {
-                    'text-field': '{ref}', // This pulls the number (71, 70, 270)
+                    'text-field': '{ref}',
                     'text-font': ['Open Sans Bold', 'Arial Unicode MS Regular'],
                     'text-size': 11,
                     'symbol-placement': 'line',
@@ -175,9 +250,9 @@
                     'symbol-spacing': 350
                 },
                 'paint': {
-                    'text-color': '#ffffff',      // White text
-                    'text-halo-color': '#004578', // Deep Interstate Blue
-                    'text-halo-width': 4,         // Thick halo to act as the "shield"
+                    'text-color': '#ffffff',      
+                    'text-halo-color': '#004578', 
+                    'text-halo-width': 4,         
                     'text-halo-blur': 1
                 }
             });
